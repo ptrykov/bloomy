@@ -22,7 +22,9 @@ func (s *Server) Run() bool {
 }
 
 func (s *Server) CreateFilter(name string, size uint) (filter.Filter, error) {
-	s.filters[name] = bf.NewCounting(size)
+	if _, ok := s.filters[name]; ok != true {
+		s.filters[name] = bf.NewCounting(size)
+	}
 	return s.filters[name], nil
 }
 

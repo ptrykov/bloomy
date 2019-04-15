@@ -16,6 +16,20 @@ func TestCreateFilter_add_a_new_filter(t *testing.T) {
 	}
 }
 
+func TestCreateFilter_should_not_recreate_a_filter(t *testing.T) {
+	s := NewServer()
+	s.CreateFilter("one", 1)
+	v := []byte("onetwothree")
+	s.Add("one", &v)
+	if s.Test("one", &v) != true {
+		t.Fatalf("Broken membership")
+	}
+	s.CreateFilter("one", 1)
+	if s.Test("one", &v) != true {
+		t.Fatalf("The filter got resetted")
+	}
+}
+
 func TestFilters_AddTestRemoveTest(t *testing.T) {
 	s := NewServer()
 	s.CreateFilter("TheMostAmazingFilter", 100)
