@@ -8,11 +8,13 @@ import (
 type Server struct {
 	// config
 	// map string -> filter
+	config  *ServerConfig
 	filters map[string]filter.Filter
 }
 
 func NewServer() *Server {
 	return &Server{
+		config:  ReadConfig(),
 		filters: make(map[string]filter.Filter),
 	}
 }
