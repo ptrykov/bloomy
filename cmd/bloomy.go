@@ -4,7 +4,7 @@ import (
 	"runtime"
 
 	config "github.com/gookit/config"
-	server "github.com/ptrykov/bloomy/internal"
+	"github.com/ptrykov/bloomy/internal"
 )
 
 func main() {
@@ -22,7 +22,7 @@ func readConfig() *server.ServerConfig {
 	config.LoadOSEnv(config_keys)
 	config.LoadFlags(config_keys)
 	return &server.ServerConfig{
-		Port: config.String("port"),
-		Channels: config.Int("channels")
+		Port:     config.String("port"),
+		Channels: uint32(config.Int("channels")),
 	}
 }

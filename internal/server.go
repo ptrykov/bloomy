@@ -29,7 +29,7 @@ func NewServer(cfg *ServerConfig) *Server {
 }
 
 func (s *Server) Run() {
-	tcpAddr, err := net.ResolveTCPAddr("tcp4", s.config.Port)
+	tcpAddr, err := net.ResolveTCPAddr("tcp4", ":"+s.config.Port)
 	checkError(err)
 	listener, err := net.ListenTCP("tcp", tcpAddr)
 	checkError(err)
@@ -39,7 +39,7 @@ func (s *Server) Run() {
 		PacketSendChanLimit:    s.config.Channels,
 	}
 
-	srv := gotcp.NewServer(config, &protocol.ProtoCallback{}, &protocol.Protocol{})
+	srv := gotcp.NewServer(config, &BloomyCallback{}, &BloomyProtocol{})
 
 	go srv.Start(listener, time.Second)
 	fmt.Println("listening:", listener.Addr())
