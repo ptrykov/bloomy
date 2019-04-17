@@ -1,11 +1,11 @@
-package protocol
+package server
 
 import (
 	"bytes"
 	"fmt"
 	"net"
-	"strings"
 
+	"encoding/binary"
 	"github.com/gansidui/gotcp"
 )
 
@@ -43,46 +43,46 @@ type BloomyPacket struct {
 
 func (p *BloomyPacket) Serialize() []byte {
 	buf := make([]byte, 4)
-	copy(buf, p.ApiVersion)
+	binary.LittleEndian.PutUint32(buf[0:], p.ApiVersion)
 	buf = append(buf, p.ApiCode)
 	buf = append(buf, p.CollectionName...)
-	buf = append(buf, p.paramEnd...)
+	buf = append(buf, paramEnd...)
 	buf = append(buf, p.Optional1...)
-	buf = append(buf, p.paramEnd...)
+	buf = append(buf, paramEnd...)
 	buf = append(buf, endTag...)
 	return buf
 }
 
 func NewBloomyPacket(data []byte) *BloomyPacket {
 	apiVersion := data[:4]
-	apiCode := data[4:5]
+	apiCode := data[4]
 	collectionEnd := bytes.Index(data[5:], paramEnd)
 	collection := data[5:collectionEnd]
 	optional1End := bytes.Index(data[collectionEnd+3:], paramEnd)
 	optional1 := data[collectionEnd+3 : optional1End]
 	return &BloomyPacket{
-		ApiVersion:     apiVersion,
+		ApiVersion:     binary.LittleEndian.Uint32(apiVersion),
 		ApiCode:        apiCode,
-		CollectionName: collectionEnd,
-		Optional1:      optional1,
+		CollectionName: string(collection),
+		Optional1:      string(optional1),
 	}
 }
 
 // Packet Out
 type BloomyPacketOut struct {
-	Type uint32
+	Type byte
 	Data []byte
 }
 
 func (p *BloomyPacketOut) Serialize() []byte {
-	buf := make([]byte, 4)
-	copy(buf, p.Type)
+	buf := make([]byte, 1)
+	buf[0] = p.Type
 	buf = append(buf, p.Data...)
 	buf = append(buf, endTag...)
 	return buf
 }
 
-func NewBloomyPacketOut(answerType uint32, data []byte) *BloomyPacket {
+func NewBloomyPacketOut(answerType byte, data []byte) *BloomyPacketOut {
 	return &BloomyPacketOut{
 		Type: answerType,
 		Data: data,
@@ -113,7 +113,7 @@ func (this *BloomyProtocol) ReadPacket(conn *net.TCPConn) (gotcp.Packet, error) 
 				command := fullBuf.Next(index)
 				fullBuf.Next(2) // skipping endTag size
 				//fmt.Println(string(command))
-				return NewBloomyPacket(command)
+				return NewBloomyPacket(command), nil
 			}
 		}
 	}
@@ -131,25 +131,25 @@ func (this *BloomyCallback) OnConnect(c *gotcp.Conn) bool {
 }
 
 func (this *BloomyCallback) OnMessage(c *gotcp.Conn, p gotcp.Packet) bool {
-	packet := p.(*BlooomyPacket)
-	command := packet.GetData()
-	commandType := packet.ApiCode()
+	packet := p.(*BloomyPacket)
+	command := packet.CollectionName
+	commandType := packet.ApiCode
 
 	switch commandType {
 	case 1:
-		c.AsyncWritePacket(NewBloomyPacketOut(1, []byte(true)), 0)
+		c.AsyncWritePacket(NewBloomyPacketOut(1, []byte{0}), 0)
 	case 2:
 		c.AsyncWritePacket(NewBloomyPacketOut(2, []byte("2")), 0)
 	case 3:
 		return false
 	case 4:
-		return
+		return true
 	case 5:
-		return
+		return true
 	case 6:
-		return
+		return true
 	default:
-		c.AsyncWritePacket(NewBloomyPacketOut(commandType, []byte("unknow command")), 0)
+		c.AsyncWritePacket(NewBloomyPacketOut(commandType, []byte(command)), 0)
 	}
 
 	return true
