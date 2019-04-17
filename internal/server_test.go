@@ -4,8 +4,13 @@ import (
 	"testing"
 )
 
+func setupServer() *Server {
+	cfg := &ServerConfig{Port: 333}
+	return NewServer(cfg)
+}
+
 func TestCreateFilter_add_a_new_filter(t *testing.T) {
-	s := NewServer()
+	s := setupServer()
 	if s.Run() != true {
 		t.Fatalf("implement")
 	}
@@ -17,7 +22,7 @@ func TestCreateFilter_add_a_new_filter(t *testing.T) {
 }
 
 func TestCreateFilter_should_not_recreate_a_filter(t *testing.T) {
-	s := NewServer()
+	s := setupServer()
 	s.CreateFilter("one", 1)
 	v := []byte("onetwothree")
 	s.Add("one", &v)
@@ -31,7 +36,7 @@ func TestCreateFilter_should_not_recreate_a_filter(t *testing.T) {
 }
 
 func TestFilters_AddTestRemoveTest(t *testing.T) {
-	s := NewServer()
+	s := setupServer()
 	s.CreateFilter("TheMostAmazingFilter", 100)
 	v := []byte("foo")
 	s.Add("TheMostAmazingFilter", &v)

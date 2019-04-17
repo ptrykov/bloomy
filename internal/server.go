@@ -1,7 +1,9 @@
 package server
 
 import (
-	"github.com/ptrykov/bloomy/pkg"
+	"log"
+
+	filter "github.com/ptrykov/bloomy/pkg"
 	bf "github.com/ptrykov/bloomy/pkg/bloom_filters"
 )
 
@@ -12,14 +14,15 @@ type Server struct {
 	filters map[string]filter.Filter
 }
 
-func NewServer() *Server {
+func NewServer(cfg *ServerConfig) *Server {
 	return &Server{
-		config:  ReadConfig(),
+		config:  cfg,
 		filters: make(map[string]filter.Filter),
 	}
 }
 
 func (s *Server) Run() bool {
+	log.Println("Listening on:", s.config.Port)
 	return true
 }
 

@@ -1,13 +1,27 @@
 package main
 
 import (
-  "runtime"
-  server "github.com/ptrykov/bloomy/internal"
+	"runtime"
+
+	config "github.com/gookit/config"
+	server "github.com/ptrykov/bloomy/internal"
 )
 
 func main() {
-  runtime.GOMAXPROCS(runtime.NumCPU())
+	runtime.GOMAXPROCS(runtime.NumCPU())
+	cfg := readConfig()
 
-  server := server.NewServer();
-  server.Run();
+	server := server.NewServer(cfg)
+	server.Run()
+}
+
+func readConfig() *server.ServerConfig {
+	config_keys := []string{"port"}
+	config.WithOptions(config.ParseEnv)
+
+	config.LoadOSEnv(config_keys)
+	config.LoadFlags(config_keys)
+	return &server.ServerConfig{
+		Port: config.Int("port"),
+	}
 }
