@@ -16,12 +16,13 @@ func main() {
 }
 
 func readConfig() *server.ServerConfig {
-	config_keys := []string{"port"}
+	config_keys := []string{"port", "channels"}
 	config.WithOptions(config.ParseEnv)
 
 	config.LoadOSEnv(config_keys)
 	config.LoadFlags(config_keys)
 	return &server.ServerConfig{
-		Port: config.Int("port"),
+		Port: config.String("port"),
+		Channels: config.Int("channels")
 	}
 }

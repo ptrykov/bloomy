@@ -1,5 +1,6 @@
 package server
 
 type ServerConfig struct {
-	Port int
+	Port     string
+	Channels uint32
 }

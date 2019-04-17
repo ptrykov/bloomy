@@ -1,8 +1,15 @@
 package server
 
 import (
+	"fmt"
 	"log"
+	"net"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
+	"github.com/gansidui/gotcp"
 	filter "github.com/ptrykov/bloomy/pkg"
 	bf "github.com/ptrykov/bloomy/pkg/bloom_filters"
 )
@@ -21,9 +28,28 @@ func NewServer(cfg *ServerConfig) *Server {
 	}
 }
 
-func (s *Server) Run() bool {
-	log.Println("Listening on:", s.config.Port)
-	return true
+func (s *Server) Run() {
+	tcpAddr, err := net.ResolveTCPAddr("tcp4", s.config.Port)
+	checkError(err)
+	listener, err := net.ListenTCP("tcp", tcpAddr)
+	checkError(err)
+
+	config := &gotcp.Config{
+		PacketReceiveChanLimit: s.config.Channels,
+		PacketSendChanLimit:    s.config.Channels,
+	}
+
+	srv := gotcp.NewServer(config, &protocol.ProtoCallback{}, &protocol.Protocol{})
+
+	go srv.Start(listener, time.Second)
+	fmt.Println("listening:", listener.Addr())
+
+	// catches system signal
+	chSig := make(chan os.Signal)
+	signal.Notify(chSig, syscall.SIGINT, syscall.SIGTERM)
+	fmt.Println("Signal: ", <-chSig)
+
+	srv.Stop()
 }
 
 func (s *Server) CreateFilter(name string, size uint) (filter.Filter, error) {
@@ -51,4 +77,10 @@ func (s *Server) Test(name string, value *[]byte) bool {
 
 func (s *Server) Remove(name string, value *[]byte) bool {
 	return s.filters[name].Remove(value)
+}
+
+func checkError(err error) {
+	if err != nil {
+		log.Fatal(err)
+	}
 }
