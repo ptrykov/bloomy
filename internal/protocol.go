@@ -9,14 +9,9 @@ import (
 	"github.com/gansidui/gotcp"
 )
 
-const (
-	apiVersionBytes = 4
-	apiCodeBytes    = 1
-)
-
 // API_VERSION 4 bytes
 
-// API_CODE 1 byte
+// API_CODE 4 bytes
 // 1 create filter (name, size)
 // 2 load filter (name)
 // 3 delete filter (name)
@@ -36,15 +31,15 @@ var (
 // Packet
 type BloomyPacket struct {
 	ApiVersion     uint32
-	ApiCode        byte
+	ApiCode        uint32
 	CollectionName string
 	Optional1      string
 }
 
 func (p *BloomyPacket) Serialize() []byte {
-	buf := make([]byte, 4)
+	buf := make([]byte, 8)
 	binary.LittleEndian.PutUint32(buf[0:], p.ApiVersion)
-	buf = append(buf, p.ApiCode)
+	binary.LittleEndian.PutUint32(buf[4:], p.ApiCode)
 	buf = append(buf, p.CollectionName...)
 	buf = append(buf, paramEnd...)
 	buf = append(buf, p.Optional1...)
@@ -54,17 +49,26 @@ func (p *BloomyPacket) Serialize() []byte {
 }
 
 func NewBloomyPacket(data []byte) *BloomyPacket {
-	apiVersion := data[:4]
-	apiCode := data[4]
-	collectionEnd := bytes.Index(data[5:], paramEnd)
-	collection := data[5:collectionEnd]
-	optional1End := bytes.Index(data[collectionEnd+3:], paramEnd)
-	optional1 := data[collectionEnd+3 : optional1End]
+	apiVersion := binary.LittleEndian.Uint32(data[:4])
+	// fmt.Println("api version: ", apiVersion)
+
+	apiCode := binary.LittleEndian.Uint32(data[4:8])
+	// fmt.Println("api code: ", apiCode)
+
+	tailBuf := data[8:]
+	collectionEnd := bytes.Index(tailBuf, paramEnd)
+	collection := string(tailBuf[:collectionEnd])
+	// fmt.Println("collection: ", collection)
+
+	tailBuf = tailBuf[collectionEnd+3:] // Skipping paramEnd
+	optional1End := bytes.Index(tailBuf, paramEnd)
+	optional1 := string(tailBuf[:optional1End])
+
 	return &BloomyPacket{
-		ApiVersion:     binary.LittleEndian.Uint32(apiVersion),
+		ApiVersion:     apiVersion,
 		ApiCode:        apiCode,
-		CollectionName: string(collection),
-		Optional1:      string(optional1),
+		CollectionName: collection,
+		Optional1:      optional1,
 	}
 }
 
@@ -98,7 +102,9 @@ func (this *BloomyProtocol) ReadPacket(conn *net.TCPConn) (gotcp.Packet, error) 
 		data := make([]byte, 1024)
 
 		readLengh, err := conn.Read(data)
-
+		fmt.Println(readLengh)
+		fmt.Println(err)
+		fmt.Println(string(data))
 		if err != nil { //EOF, or worse
 			return nil, err
 		}
@@ -112,7 +118,8 @@ func (this *BloomyProtocol) ReadPacket(conn *net.TCPConn) (gotcp.Packet, error) 
 			if index > -1 {
 				command := fullBuf.Next(index)
 				fullBuf.Next(2) // skipping endTag size
-				//fmt.Println(string(command))
+				fmt.Println("command")
+				fmt.Println(string(command))
 				return NewBloomyPacket(command), nil
 			}
 		}
@@ -134,6 +141,7 @@ func (this *BloomyCallback) OnMessage(c *gotcp.Conn, p gotcp.Packet) bool {
 	packet := p.(*BloomyPacket)
 	command := packet.CollectionName
 	commandType := packet.ApiCode
+	fmt.Println("OnMessage: ", command, " ", commandType)
 
 	switch commandType {
 	case 1:
@@ -149,7 +157,7 @@ func (this *BloomyCallback) OnMessage(c *gotcp.Conn, p gotcp.Packet) bool {
 	case 6:
 		return true
 	default:
-		c.AsyncWritePacket(NewBloomyPacketOut(commandType, []byte(command)), 0)
+		c.AsyncWritePacket(NewBloomyPacketOut(3, []byte(command)), 0)
 	}
 
 	return true
