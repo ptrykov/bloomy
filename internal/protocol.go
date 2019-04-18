@@ -101,18 +101,15 @@ func (this *BloomyProtocol) ReadPacket(conn *net.TCPConn) (gotcp.Packet, error) 
 	for {
 		data := make([]byte, 1024)
 
-		readLengh, err := conn.Read(data)
-		fmt.Println(readLengh)
-		fmt.Println(err)
-		fmt.Println(string(data))
+		readLen, err := conn.Read(data)
 		if err != nil { //EOF, or worse
 			return nil, err
 		}
 
-		if readLengh == 0 { // Connection maybe closed by the client
+		if readLen == 0 { // Connection maybe closed by the client
 			return nil, gotcp.ErrConnClosing
 		} else {
-			fullBuf.Write(data[:readLengh])
+			fullBuf.Write(data[:readLen])
 
 			index := bytes.Index(fullBuf.Bytes(), endTag)
 			if index > -1 {
