@@ -5,15 +5,12 @@ import (
 )
 
 func setupServer() *Server {
-	cfg := &ServerConfig{Port: 333}
+	cfg := &ServerConfig{Port: "333"}
 	return NewServer(cfg)
 }
 
 func TestCreateFilter_add_a_new_filter(t *testing.T) {
 	s := setupServer()
-	if s.Run() != true {
-		t.Fatalf("implement")
-	}
 
 	_, err := s.CreateFilter("storage", 100)
 	if err != nil {
