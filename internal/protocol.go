@@ -34,18 +34,34 @@ type BloomyPacket struct {
 	ApiCode        uint32
 	CollectionName string
 	Optional1      string
+	Optional2      string
 }
 
 func (p *BloomyPacket) Serialize() []byte {
-	buf := make([]byte, 8)
-	binary.LittleEndian.PutUint32(buf[0:], p.ApiVersion)
-	binary.LittleEndian.PutUint32(buf[4:], p.ApiCode)
-	buf = append(buf, p.CollectionName...)
-	buf = append(buf, paramEnd...)
-	buf = append(buf, p.Optional1...)
-	buf = append(buf, paramEnd...)
-	buf = append(buf, endTag...)
+	buf := []byte{0}
 	return buf
+}
+
+func parseParam(data []byte, end []byte) (param string, count int) {
+	index := bytes.Index(data, end)
+	if index > -1 {
+		return string(data[:index]), index
+	}
+	return "", 0
+}
+
+func processParams(data []byte, end []byte) (collection string, optional1 string, optional2 string) {
+	var index, cSize, o1Size = 0, 0, 0
+
+	collection, cSize = parseParam(data, end)
+	index += cSize + 3 // Skip paramEnd
+
+	optional1, o1Size = parseParam(data[index:], end)
+	index += o1Size + 3 // Skip paramEnd
+
+	optional2, _ = parseParam(data[index:], end)
+
+	return
 }
 
 func NewBloomyPacket(data []byte) *BloomyPacket {
@@ -55,20 +71,14 @@ func NewBloomyPacket(data []byte) *BloomyPacket {
 	apiCode := binary.LittleEndian.Uint32(data[4:8])
 	// fmt.Println("api code: ", apiCode)
 
-	tailBuf := data[8:]
-	collectionEnd := bytes.Index(tailBuf, paramEnd)
-	collection := string(tailBuf[:collectionEnd])
-	// fmt.Println("collection: ", collection)
-
-	tailBuf = tailBuf[collectionEnd+3:] // Skipping paramEnd
-	optional1End := bytes.Index(tailBuf, paramEnd)
-	optional1 := string(tailBuf[:optional1End])
-
+	collection, param1, param2 := processParams(data[8:], paramEnd)
+	fmt.Println("params collection ", collection, "param1 ", param1, "param2", param2)
 	return &BloomyPacket{
 		ApiVersion:     apiVersion,
 		ApiCode:        apiCode,
 		CollectionName: collection,
-		Optional1:      optional1,
+		Optional1:      param1,
+		Optional2:      param2,
 	}
 }
 
