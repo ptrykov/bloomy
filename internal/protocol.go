@@ -37,14 +37,7 @@ type BloomyPacket struct {
 }
 
 func (p *BloomyPacket) Serialize() []byte {
-	buf := make([]byte, 8)
-	binary.LittleEndian.PutUint32(buf[0:], p.ApiVersion)
-	binary.LittleEndian.PutUint32(buf[4:], p.ApiCode)
-	buf = append(buf, p.CollectionName...)
-	buf = append(buf, paramEnd...)
-	buf = append(buf, p.Optional1...)
-	buf = append(buf, paramEnd...)
-	buf = append(buf, endTag...)
+	buf := []byte{0}
 	return buf
 }
 
