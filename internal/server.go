@@ -57,6 +57,18 @@ func (s *Server) Remove(name string, value *[]byte) bool {
 }
 
 func (s *Server) Run() {
+	s.CreateFilter("users", 5)
+	val := []byte("simone")
+	s.Add("users", &val)
+	val = []byte("pavel")
+	s.Add("users", &val)
+	filter := bf.Load(s.filters["users"].Dump())
+	fmt.Println("include pavel?", filter.Test(&val))
+	val = []byte("simone")
+	fmt.Println("include simone?", filter.Test(&val))
+	val = []byte("sebastian")
+	fmt.Println("include sebastian?", filter.Test(&val))
+
 	tcpAddr, err := net.ResolveTCPAddr("tcp4", ":"+s.config.Port)
 	checkError(err)
 	listener, err := net.ListenTCP("tcp", tcpAddr)
