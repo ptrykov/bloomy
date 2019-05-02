@@ -1,6 +1,29 @@
 require 'socket'
 s = TCPSocket.new 'localhost', 5555
-s.write [0, 2, "sebastian", " \t ", "234",  " \t ", "\r\n"].pack("L<L<a*a3a*a3a2")
+s.write [0, 1, "sebastian", " \t ", "234",  " \t ", "\r\n"].pack("L<L<a*a3a*a3a2")
+s.gets
+# => "\x01\x00\r\n"
+s.write [0, 4, "sebastian", " \t ", "hola",  " \t ", "\r\n"].pack("L<L<a*a3a*a3a2")
+s.gets
+#=> "\x04\x00\r\n"
+s.write [0, 5, "sebastian", " \t ", "hola",  " \t ", "\r\n"].pack("L<L<a*a3a*a3a2")
+s.gets
+#=> "\x051\r\n"
+s.write [0, 5, "sebastian", " \t ", "hola",  " \t ", "\r\n"].pack("L<L<a*a3a*a3a2")
+s.gets
+#=> "\x051\r\n"
+s.write [0, 5, "sebastian", " \t ", "hola123",  " \t ", "\r\n"].pack("L<L<a*a3a*a3a2")
+s.gets
+#=> "\x050\r\n"
+s.write [0, 6, "sebastian", " \t ", "hola",  " \t ", "\r\n"].pack("L<L<a*a3a*a3a2")
+s.gets
+#=> "\x061\r\n"
+s.write [0, 5, "sebastian", " \t ", "hola",  " \t ", "\r\n"].pack("L<L<a*a3a*a3a2")
+s.gets
+#=> "\x050\r\n"
+s.write [0, 6, "sebastian", " \t ", "hola",  " \t ", "\r\n"].pack("L<L<a*a3a*a3a2")
+s.gets
+#=> "\x060\r\n"
 
 # Directives for pack
 # Integer      | Array   |
@@ -96,4 +119,4 @@ s.write [0, 2, "sebastian", " \t ", "234",  " \t ", "\r\n"].pack("L<L<a*a3a*a3a2
 # ---------------------------------------------------------------------------
 #    @         | ---     | moves to absolute position
 #    X         | ---     | back up a byte
-#    x         | ---     | null byte             
+#    x         | ---     | null byte
