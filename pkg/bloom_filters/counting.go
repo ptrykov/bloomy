@@ -2,6 +2,7 @@ package filter
 
 import (
 	counting "github.com/tylertreat/BoomFilters"
+	"hash"
 )
 
 // Counting
@@ -26,4 +27,20 @@ func (c *Counting) Remove(value *[]byte) bool {
 
 func (c *Counting) Test(value *[]byte) bool {
 	return c.filter.Test(*value)
+}
+
+func Load(buckets []byte, hash hash.Hash64, capacity uint, k uint, count uint, indexes []uint) *Counting {
+	return &Counting{
+		filter: counting.CountingFilterLoadWith(buckets, 15, hash, capacity, k, count, indexes),
+	}
+}
+
+func (c *Counting) Dump() (b []byte, h hash.Hash64, m uint, k uint, count uint, indexes []uint) {
+	b = c.filter.GetBuckets()
+	h = c.filter.GetHash()
+	m = c.filter.Capacity()
+	k = c.filter.K()
+	count = c.filter.Count()
+	indexes = c.filter.GetIndexBuffer()
+	return
 }
