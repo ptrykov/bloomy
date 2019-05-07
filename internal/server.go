@@ -104,7 +104,6 @@ func (sc *Server) OnMessage(c *gotcp.Conn, p gotcp.Packet) bool {
 	packet := p.(*BloomyPacket)
 	command := packet.CollectionName
 	commandType := packet.ApiCode
-	fmt.Println("OnMessage: ", command, " ", commandType)
 	optional1Bytes := []byte(packet.Optional1)
 	switch commandType {
 	case 1:

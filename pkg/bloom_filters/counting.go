@@ -2,7 +2,6 @@ package filter
 
 import (
 	counting "github.com/tylertreat/BoomFilters"
-	"hash"
 )
 
 // Counting
@@ -12,7 +11,7 @@ type Counting struct {
 
 func NewCounting(n uint) *Counting {
 	return &Counting{
-		filter: counting.NewCountingBloomFilter(n, 15, 0.01),
+		filter: counting.NewCountingBloomFilter(n, 30, 0.001),
 	}
 }
 
@@ -29,15 +28,14 @@ func (c *Counting) Test(value *[]byte) bool {
 	return c.filter.Test(*value)
 }
 
-func Load(buckets []byte, hash hash.Hash64, capacity uint, k uint, count uint, indexes []uint) *Counting {
+func Load(buckets []byte, capacity uint, k uint, count uint, indexes []uint) *Counting {
 	return &Counting{
-		filter: counting.CountingFilterLoadWith(buckets, 15, hash, capacity, k, count, indexes),
+		filter: counting.CountingFilterLoadWith(buckets, 30, capacity, k, count, indexes),
 	}
 }
 
-func (c *Counting) Dump() (b []byte, h hash.Hash64, m uint, k uint, count uint, indexes []uint) {
+func (c *Counting) Dump() (b []byte, m uint, k uint, count uint, indexes []uint) {
 	b = c.filter.GetBuckets()
-	h = c.filter.GetHash()
 	m = c.filter.Capacity()
 	k = c.filter.K()
 	count = c.filter.Count()
