@@ -11,7 +11,7 @@ type Counting struct {
 
 func NewCounting(n uint) *Counting {
 	return &Counting{
-		filter: counting.NewCountingBloomFilter(n, 15, 0.01),
+		filter: counting.NewCountingBloomFilter(n, 30, 0.001),
 	}
 }
 
@@ -26,4 +26,19 @@ func (c *Counting) Remove(value *[]byte) bool {
 
 func (c *Counting) Test(value *[]byte) bool {
 	return c.filter.Test(*value)
+}
+
+func Load(buckets []byte, capacity uint, k uint, count uint, indexes []uint) *Counting {
+	return &Counting{
+		filter: counting.CountingFilterLoadWith(buckets, 30, capacity, k, count, indexes),
+	}
+}
+
+func (c *Counting) Dump() (b []byte, m uint, k uint, count uint, indexes []uint) {
+	b = c.filter.GetBuckets()
+	m = c.filter.Capacity()
+	k = c.filter.K()
+	count = c.filter.Count()
+	indexes = c.filter.GetIndexBuffer()
+	return
 }

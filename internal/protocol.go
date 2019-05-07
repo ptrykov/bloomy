@@ -125,8 +125,6 @@ func (this *BloomyProtocol) ReadPacket(conn *net.TCPConn) (gotcp.Packet, error) 
 			if index > -1 {
 				command := fullBuf.Next(index)
 				fullBuf.Next(2) // skipping endTag size
-				fmt.Println("command")
-				fmt.Println(string(command))
 				return NewBloomyPacket(command), nil
 			}
 		}
